@@ -5,14 +5,45 @@ import prisma from "./prismadb";
 const app: Express = express();
 const PORT = process.env.PORT || 4000;
 
+app.use(express.json());
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!!!");
 });
 
-app.get("/identity", async (req: Request, res: Response) => {
-  const contacts = await prisma.contact.findMany();
-  res.send(`Hi there! We have ${contacts.length} contacts in our database.`);
+
+app.post("/identity", async (req: Request, res: Response) => {
+  let { email, phoneNumber } = req.body;
+  if(!email && !phoneNumber) return res.status(400).send("Please provide email and/or phoneNumber");
+
+  console.log(email, phoneNumber);
+
+  // Find contacts with the provided email and/or phoneNumber
+  const contacts = await prisma.contact.findMany({
+    where: {
+      OR: [
+        {
+          email: {
+            equals: email as string,
+            not: null,
+          },
+        },
+        {
+          phoneNumber: {
+            equals: phoneNumber as string,
+            not: null,
+          },
+        },
+      ],
+    },
+  });
+  
+  if (!contacts.length) {
+    res.send("No contact found");
+  }
+
+  res.json(contacts);
+
 });
 
 app.listen(PORT, () => {
