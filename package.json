@@ -1,0 +1,22 @@
+{
+  "name": "identity-reconcillation",
+  "version": "1.0.0",
+  "description": "Identify and keep track of a user's identity across multiple requests with different contact information.",
+  "main": "src/server.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "npx ts-node src/server.ts",
+    "dev": "npx nodemon"
+  },
+  "author": "Muzaffar",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  }
+}
