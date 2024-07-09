@@ -39,7 +39,22 @@ app.post("/identity", async (req: Request, res: Response) => {
   });
   
   if (!contacts.length) {
-    res.send("No contact found");
+    const contact = await prisma.contact.create({
+      data: {
+        email: email as string,
+        phoneNumber: phoneNumber as string,
+        linkPrecedence: "primary",
+      },
+    });
+
+    return res.json({
+      contact: {
+        primaryContactId: contact.id,
+        emails: contact.email ? [contact.email] : [],
+        phoneNumbers: contact.phoneNumber ? [contact.phoneNumber] : [],
+        secondaryContactIds: [],
+      }
+    });
   }
 
   res.json(contacts);
