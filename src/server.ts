@@ -60,7 +60,57 @@ app.post("/identity", async (req: Request, res: Response) => {
     });
   }
 
-  res.json(contacts);
+  let primaryContactId: number | null = null;
+  
+  // Find primary contact id
+  contacts.forEach(async (contact) => {
+    if(contact.linkPrecedence === "primary") {
+      if(!primaryContactId) primaryContactId = contact.id;
+    }
+  });
+
+  // If no primary contact found(means all found contacts are secondary contacts), get the primary contact id from the first(or any) contact
+  if(!primaryContactId) {
+    primaryContactId = contacts[0].linkedId;
+  }
+
+  let primaryContact = null;
+  // Get the primary contact details along with all its secondary contacts
+  if(primaryContactId) {
+    primaryContact = await prisma.contact.findUnique({
+      where: {
+        id: primaryContactId
+      },
+      include: {
+        linkedFrom: true
+      }
+    });
+  }
+
+  if(primaryContact) {
+
+    // Form the response object
+    let emails: string[] = primaryContact.email ? [primaryContact.email] : [];
+    let phoneNumbers: string[] = primaryContact.phoneNumber ? [primaryContact.phoneNumber] : [];
+    let secondaryContactIds: number[] = [];
+    primaryContact.linkedFrom.forEach((contact) => {
+      if(contact.email) emails.push(contact.email);
+      if(contact.phoneNumber) phoneNumbers.push(contact.phoneNumber);
+      secondaryContactIds.push(contact.id);
+    });
+
+    return res.json({
+      contact: {
+        primaryContactId,
+        emails,
+        phoneNumbers,
+        secondaryContactIds
+      }
+    });
+  }
+
+  return res.status(500).send("Something went wrong");
+
 
 });
 
