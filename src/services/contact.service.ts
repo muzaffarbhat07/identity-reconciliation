@@ -21,6 +21,22 @@ export const findContactsByEmailOrPhoneNumber = async (email: string, phoneNumbe
   });
 }
 
+export const findFirstContactByEmail = async (email: string) => {
+  return await prisma.contact.findFirst({
+    where: {
+      email: email,
+    },
+  });
+}
+
+export const findFirstContactByPhoneNumber = async (phoneNumber: string) => {
+  return await prisma.contact.findFirst({
+    where: {
+      phoneNumber: phoneNumber,
+    },
+  });
+}
+
 export const findContactById = async (id: number) => {
   return await prisma.contact.findUnique({
     where: {

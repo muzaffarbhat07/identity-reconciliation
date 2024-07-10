@@ -23,7 +23,4 @@ model Contact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime?
-
-  linkedTo Contact? @relation("LinkedTo", fields: [linkedId], references: [id])
-  linkedFrom Contact[] @relation("LinkedTo")
 }
