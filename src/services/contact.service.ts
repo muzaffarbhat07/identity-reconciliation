@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../db/prismadb";
 
 export const findContactsByEmailOrPhoneNumber = async (email: string, phoneNumber: string) => {
@@ -45,14 +46,7 @@ export const findContactById = async (id: number) => {
   });
 }
 
-interface CreateContact {
-  email?: string;
-  phoneNumber?: string;
-  linkPrecedence: "primary" | "secondary";
-  linkedId?: number;
-}
-
-export const createContact = async ({ email, phoneNumber, linkPrecedence, linkedId } : CreateContact) => {
+export const createContact = async ({ email, phoneNumber, linkPrecedence, linkedId } : Prisma.ContactCreateInput) => {
   return await prisma.contact.create({
     data: {
       email,
@@ -63,7 +57,7 @@ export const createContact = async ({ email, phoneNumber, linkPrecedence, linked
   });
 }
 
-export const updateContact = async (id: number, data: CreateContact) => {
+export const updateContact = async (id: number, data: Prisma.ContactUpdateInput) => {
   return await prisma.contact.update({
     where: {
       id: id,

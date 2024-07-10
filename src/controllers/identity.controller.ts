@@ -9,25 +9,26 @@ import {
   updateContact,
   updateContactsPrimaryLinkedId
 } from "../services/contact.service";
+import { IdentityRequest } from "../schemas/identity.schema";
+import { Contact, LinkPrecedence } from "@prisma/client";
 
 
-export const identityController = async (req: Request, res: Response, next: NextFunction) => {
+export const identityController = async (req: Request<{}, {}, IdentityRequest>, res: Response, next: NextFunction) => {
   try {
     const { email, phoneNumber } = req.body;
-    if(!email && !phoneNumber) {
-      throw new AppError(400, "Please provide either email or phoneNumber or both");
-    }
 
     // Find first contact by email and phoneNumber
-    const firstContactByEmail = await findFirstContactByEmail(email as string);
-    const firstContactByPhoneNumber = await findFirstContactByPhoneNumber(phoneNumber as string);
+    const firstContactByEmail = email ? await findFirstContactByEmail(email) : null;
+    const firstContactByPhoneNumber = phoneNumber ? await findFirstContactByPhoneNumber(phoneNumber) : null;
+
+    console.log(firstContactByEmail, firstContactByPhoneNumber);
 
     // If no contact found with the provided email and phoneNumber, create a new contact
     if(!firstContactByEmail && !firstContactByPhoneNumber) {
       const contact = await createContact({
-        email: email as string,
-        phoneNumber: phoneNumber as string,
-        linkPrecedence: "primary"
+        email,
+        phoneNumber,
+        linkPrecedence: LinkPrecedence.primary,
       })
 
       return res.json({
@@ -41,8 +42,8 @@ export const identityController = async (req: Request, res: Response, next: Next
     }
 
     // Get the primary contact of the first contact found by email and phoneNumber
-    const primaryContactOfEmail = await getPrimaryContactOfGivenContact(firstContactByEmail);
-    const primaryContactOfPhoneNumber = await getPrimaryContactOfGivenContact(firstContactByPhoneNumber);
+    const primaryContactOfEmail = firstContactByEmail ? await getPrimaryContactOfGivenContact(firstContactByEmail) : null;
+    const primaryContactOfPhoneNumber = firstContactByPhoneNumber ? await getPrimaryContactOfGivenContact(firstContactByPhoneNumber): null;
 
     // If both contacts are null(which should not be the case), throw error
     if(!primaryContactOfEmail && !primaryContactOfPhoneNumber) {
@@ -52,14 +53,17 @@ export const identityController = async (req: Request, res: Response, next: Next
     // Lets make one of them as our primary contact
     // const primaryContact = primaryContactOfEmail ? primaryContactOfEmail : primaryContactOfPhoneNumber;
     const primaryContact = choosePrimaryContact(primaryContactOfEmail, primaryContactOfPhoneNumber);
+    if(!primaryContact) {
+      throw new AppError(500, "Internal Server Error");
+    }
 
     // If one of the contacts is null, which means incoming request has either of email or phoneNumber common to an existing contact and contains new information
     // Create a new secondary contact
     if(!primaryContactOfEmail || !primaryContactOfPhoneNumber) {
       const contact = await createContact({
-        email: email as string,
-        phoneNumber: phoneNumber as string,
-        linkPrecedence: "secondary",
+        email,
+        phoneNumber,
+        linkPrecedence: LinkPrecedence.secondary,
         linkedId: primaryContact.id
       });
     } else { // means both contacts are not null
@@ -89,21 +93,20 @@ export const identityController = async (req: Request, res: Response, next: Next
   }
 }
 
-const getPrimaryContactOfGivenContact = async (contact: any) => {
-  if(!contact) return null;
-
+const getPrimaryContactOfGivenContact = async (contact: Contact) => {
   if(isPrimaryContact(contact)) {
     return contact;
-  } else {
+  } else if(contact.linkedId) {
     return await findContactById(contact.linkedId);
   }
+  return null;
 };
 
-const isPrimaryContact = (contact: any) => {
-  return contact && contact.linkPrecedence === "primary";
+const isPrimaryContact = (contact: Contact) => {
+  return contact.linkPrecedence === LinkPrecedence.primary;
 }
 
-const choosePrimaryContact = (primaryContact1: any, primaryContact2: any) => {
+const choosePrimaryContact = (primaryContact1: Contact | null, primaryContact2: Contact | null) => {
   // If any one of the contact is null, return the other one
   if(!primaryContact1) return primaryContact2;
   if(!primaryContact2) return primaryContact1;
@@ -114,19 +117,19 @@ const choosePrimaryContact = (primaryContact1: any, primaryContact2: any) => {
   // @NOTE: We can have more complex logic to choose primary contact, like based on the number of secondary contacts linked to them
 };
 
-const updateContactFromPrimaryToSecondary = async (contact: any, primaryContact: any) => {
+const updateContactFromPrimaryToSecondary = async (contact: Contact, primaryContact: Contact) => {
 
   // Firstly, update all those secondary contacts linked to the given contact to the primary contact
   await updateContactsPrimaryLinkedId(contact.id, primaryContact.id);
 
   // Now, update the given contact to secondary contact
   await updateContact(contact.id, {
-    linkPrecedence: "secondary",
+    linkPrecedence: LinkPrecedence.secondary,
     linkedId: primaryContact.id
   });
 };
 
-const getConsolidatedContactDetails = async (primaryContact: any) => {
+const getConsolidatedContactDetails = async (primaryContact: Contact) => {
   let emails: string[] = primaryContact.email ? [primaryContact.email] : [];
   let phoneNumbers: string[] = primaryContact.phoneNumber ? [primaryContact.phoneNumber] : [];
   let secondaryContactIds: number[] = [];
