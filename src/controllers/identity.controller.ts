@@ -1,6 +1,13 @@
 import { NextFunction, Request, Response } from "express";
-import prisma from "../db/prismadb";
 import { AppError } from "../utils/appError";
+import { 
+  createContact,
+  findContactById,
+  findContactsByEmailOrPhoneNumber, 
+  findSecondaryContactsLinkedToPrimaryContact, 
+  updateContact,
+  updateContactsPrimaryLinkedId
+} from "../services/contact.service";
 
 
 export const identityController = async (req: Request, res: Response, next: NextFunction) => {
@@ -12,34 +19,15 @@ export const identityController = async (req: Request, res: Response, next: Next
     }
   
     // Find contacts with the provided email and/or phoneNumber
-    const contacts = await prisma.contact.findMany({
-      where: {
-        OR: [
-          {
-            email: {
-              equals: email as string,
-              not: null,
-            },
-          },
-          {
-            phoneNumber: {
-              equals: phoneNumber as string,
-              not: null,
-            },
-          },
-        ],
-      },
-    });
+    const contacts = await findContactsByEmailOrPhoneNumber(email as string, phoneNumber as string);
     
     if (!contacts.length) {
       //create a new contact as primary contact
-      const contact = await prisma.contact.create({
-        data: {
-          email: email as string,
-          phoneNumber: phoneNumber as string,
-          linkPrecedence: "primary",
-        },
-      });
+      const contact = await createContact({
+        email: email as string,
+        phoneNumber: phoneNumber as string,
+        linkPrecedence: "primary"
+      })
   
       return res.json({
         contact: {
@@ -71,24 +59,12 @@ export const identityController = async (req: Request, res: Response, next: Next
           // If multiple primary contacts found, update them to secondary contacts, except the first one
           
           //firstly, update all those secondary contacts linked to the current primary contact to the first primary contact
-          await prisma.contact.updateMany({
-            where: {
-              linkedId: contact.id
-            },
-            data: {
-              linkedId: primaryContactId
-            }
-          });
+          await updateContactsPrimaryLinkedId(contact.id, primaryContactId);
   
           // Now, update the current primary contact to secondary contact
-          await prisma.contact.update({
-            where: {
-              id: contact.id
-            },
-            data: {
-              linkPrecedence: "secondary",
-              linkedId: primaryContactId
-            }
+          await updateContact(contact.id, {
+            linkPrecedence: "secondary",
+            linkedId: primaryContactId
           });
         }
       }
@@ -102,47 +78,31 @@ export const identityController = async (req: Request, res: Response, next: Next
     
     // If we reach here it means incoming request has either of email or phoneNumber or both common to an existing contact and might contain new information
     // Create a new secondary contact with the provided email or phoneNumber if not already present
-    if(email && !contactByEmailPresent) { // checks if email is the new information
-      const contact = await prisma.contact.create({
-        data: {
-          email: email as string,
-          phoneNumber: phoneNumber as string,
-          linkPrecedence: "secondary",
-          linkedId: primaryContactId
-        },
-      });
-    }
-    else if(phoneNumber && !contactByPhoneNumberPresent) { // checks if phoneNumber is the new information
-      const contact = await prisma.contact.create({
-        data: {
-          email: email as string,
-          phoneNumber: phoneNumber as string,
-          linkPrecedence: "secondary",
-          linkedId: primaryContactId
-        },
+    if((email && !contactByEmailPresent) || (phoneNumber && !contactByPhoneNumberPresent)) { // checks if email or phoneNumber is the new information
+      const contact = await createContact({
+        email: email as string,
+        phoneNumber: phoneNumber as string,
+        linkPrecedence: "secondary",
+        linkedId: primaryContactId ? primaryContactId : undefined
       });
     }
   
     let primaryContact = null;
     // Get the primary contact details along with all its secondary contacts
     if(primaryContactId) {
-      primaryContact = await prisma.contact.findUnique({
-        where: {
-          id: primaryContactId
-        },
-        include: {
-          linkedFrom: true
-        }
-      });
+      primaryContact = await findContactById(primaryContactId);
     }
   
     if(primaryContact) {
-  
+      
+      // Get all the secondary contacts linked to the primary contact
+      const secondaryContacts = await findSecondaryContactsLinkedToPrimaryContact(primaryContact.id);
+
       // Get all the emails, phoneNumbers and secondary contact ids
       let emails: string[] = primaryContact.email ? [primaryContact.email] : [];
       let phoneNumbers: string[] = primaryContact.phoneNumber ? [primaryContact.phoneNumber] : [];
       let secondaryContactIds: number[] = [];
-      primaryContact.linkedFrom.forEach((contact) => {
+      secondaryContacts.forEach((contact) => {
         if(contact.email) emails.push(contact.email);
         if(contact.phoneNumber) phoneNumbers.push(contact.phoneNumber);
         secondaryContactIds.push(contact.id);
