@@ -48,8 +48,6 @@ app.post("/identity", async (req: Request, res: Response) => {
       },
     });
 
-    console.log(contact);
-
     return res.json({
       contact: {
         primaryContactId: contact.id,
@@ -66,9 +64,6 @@ app.post("/identity", async (req: Request, res: Response) => {
 
   // Find primary contact id, check if contact(s) with the provided email and phoneNumber already present
   contacts.forEach(async (contact) => {
-    if(contact.linkPrecedence === "primary") {
-      if(!primaryContactId) primaryContactId = contact.id;
-    }
 
     if(contact.email === email) {
       contactByEmailPresent = true;
@@ -76,6 +71,23 @@ app.post("/identity", async (req: Request, res: Response) => {
     if(contact.phoneNumber === phoneNumber) {
       contactByPhoneNumberPresent = true;
     }
+
+    if(contact.linkPrecedence === "primary") {
+      if(!primaryContactId) primaryContactId = contact.id;
+      else {
+        // If multiple primary contacts found, update them to secondary contacts, except the first one
+        await prisma.contact.update({
+          where: {
+            id: contact.id
+          },
+          data: {
+            linkPrecedence: "secondary",
+            linkedId: primaryContactId
+          }
+        });
+      }
+    }
+
   });
 
   // If no primary contact found(means all found contacts are secondary contacts), get the primary contact id from the first(or any) contact
