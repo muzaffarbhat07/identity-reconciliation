@@ -21,6 +21,8 @@ model Contact {
   linkedId Int? // the ID of another Contact linked to this one
   linkPrecedence String? // "secondary"|"primary" // "primary" if it's the first Contact in th
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   linkedTo Contact? @relation("LinkedTo", fields: [linkedId], references: [id])
   linkedFrom Contact[] @relation("LinkedTo")

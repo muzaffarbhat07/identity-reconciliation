@@ -39,6 +39,7 @@ app.post("/identity", async (req: Request, res: Response) => {
   });
   
   if (!contacts.length) {
+    //create a new contact as primary contact
     const contact = await prisma.contact.create({
       data: {
         email: email as string,
@@ -46,6 +47,8 @@ app.post("/identity", async (req: Request, res: Response) => {
         linkPrecedence: "primary",
       },
     });
+
+    console.log(contact);
 
     return res.json({
       contact: {
