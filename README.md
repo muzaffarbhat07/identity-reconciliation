@@ -1,4 +1,4 @@
-# Identity Reconciliation Service
+# Identity Reconcillation Service
 
 ## Overview
 
@@ -50,22 +50,22 @@ The response is in this format:
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/identity-reconciliation-service.git
-cd identity-reconciliation-service
+git clone https://github.com/muzaffarbhat07/identity-reconcillation.git
+cd identity-reconcillation
 ```
 
 2. Install dependencies:
 ```bash
 npm install
 ```
-
-3. Set up your database connection by editing the .env file with your database credentials.
-4. Run database migrations:
+3. Set up .env file by referring to .env.example file.
+4. Set up your database connection by editing the .env file with your database credentials.
+5. Run database migrations:
 ```bash
 npx prisma migrate dev
 ```
 
-5. Start the service:
+6. Start the service:
 ```bash
 npm start
 ```
