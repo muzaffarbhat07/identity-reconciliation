@@ -61,17 +61,49 @@ app.post("/identity", async (req: Request, res: Response) => {
   }
 
   let primaryContactId: number | null = null;
-  
-  // Find primary contact id
+  let contactByEmailPresent = false;
+  let contactByPhoneNumberPresent = false;
+
+  // Find primary contact id, check if contact(s) with the provided email and phoneNumber already present
   contacts.forEach(async (contact) => {
     if(contact.linkPrecedence === "primary") {
       if(!primaryContactId) primaryContactId = contact.id;
+    }
+
+    if(contact.email === email) {
+      contactByEmailPresent = true;
+    }
+    if(contact.phoneNumber === phoneNumber) {
+      contactByPhoneNumberPresent = true;
     }
   });
 
   // If no primary contact found(means all found contacts are secondary contacts), get the primary contact id from the first(or any) contact
   if(!primaryContactId) {
     primaryContactId = contacts[0].linkedId;
+  }
+  
+  // If we reach here it means incoming request has either of email or phoneNumber or both common to an existing contact and might contain new information
+  // Create a new secondary contact with the provided email or phoneNumber if not already present
+  if(email && !contactByEmailPresent) { // check if email is the new information
+    const contact = await prisma.contact.create({
+      data: {
+        email: email as string,
+        phoneNumber: phoneNumber as string,
+        linkPrecedence: "secondary",
+        linkedId: primaryContactId
+      },
+    });
+  }
+  else if(phoneNumber && !contactByPhoneNumberPresent) { // checks if phoneNumber is the new information
+    const contact = await prisma.contact.create({
+      data: {
+        email: email as string,
+        phoneNumber: phoneNumber as string,
+        linkPrecedence: "secondary",
+        linkedId: primaryContactId
+      },
+    });
   }
 
   let primaryContact = null;
@@ -89,7 +121,7 @@ app.post("/identity", async (req: Request, res: Response) => {
 
   if(primaryContact) {
 
-    // Form the response object
+    // Get all the emails, phoneNumbers and secondary contact ids
     let emails: string[] = primaryContact.email ? [primaryContact.email] : [];
     let phoneNumbers: string[] = primaryContact.phoneNumber ? [primaryContact.phoneNumber] : [];
     let secondaryContactIds: number[] = [];
@@ -98,6 +130,10 @@ app.post("/identity", async (req: Request, res: Response) => {
       if(contact.phoneNumber) phoneNumbers.push(contact.phoneNumber);
       secondaryContactIds.push(contact.id);
     });
+
+    // Remove duplicate emails and phoneNumbers
+    emails = [...new Set(emails)];
+    phoneNumbers = [...new Set(phoneNumbers)];
 
     return res.json({
       contact: {
