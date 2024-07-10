@@ -13,7 +13,7 @@ It is particularly useful in environments where tries to use different contact i
 
 ## Usage
 
-The service can be accessed at <deployed_link>
+The service can be accessed at https://identity-reconcillation.vercel.app/
 
 The end point ```/identity``` receives the HTTP POST requests with JSON body of the following format:
 ```
