@@ -76,6 +76,18 @@ app.post("/identity", async (req: Request, res: Response) => {
       if(!primaryContactId) primaryContactId = contact.id;
       else {
         // If multiple primary contacts found, update them to secondary contacts, except the first one
+        
+        //firstly, update all those secondary contacts linked to the current primary contact to the first primary contact
+        await prisma.contact.updateMany({
+          where: {
+            linkedId: contact.id
+          },
+          data: {
+            linkedId: primaryContactId
+          }
+        });
+
+        // Now, update the current primary contact to secondary contact
         await prisma.contact.update({
           where: {
             id: contact.id
@@ -97,7 +109,7 @@ app.post("/identity", async (req: Request, res: Response) => {
   
   // If we reach here it means incoming request has either of email or phoneNumber or both common to an existing contact and might contain new information
   // Create a new secondary contact with the provided email or phoneNumber if not already present
-  if(email && !contactByEmailPresent) { // check if email is the new information
+  if(email && !contactByEmailPresent) { // checks if email is the new information
     const contact = await prisma.contact.create({
       data: {
         email: email as string,
