@@ -4,7 +4,7 @@
 
 - The Identity Reconciliation Service is designed to identify and keep track of a user's identity across multiple requests with different contact information.
 - This service ensures linking different requests made with different contact information to the same person.
-- It is particularly useful in environments where tries to use different contact information for each request.
+- It is particularly useful in environments where user tries to use different contact information for each request.
 
 ## Features
 
