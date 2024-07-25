@@ -2,6 +2,7 @@ import express, { Express, NextFunction, Request, Response } from "express";
 import "dotenv/config";
 import { AppError } from "./utils/appError";
 import identityRoutes from "./routes/identity.routes";
+import overview from "./public/overview";
 
 const app: Express = express();
 const PORT = process.env.PORT || 4000;
@@ -14,10 +15,12 @@ app.use("/identity", identityRoutes);
 
 // Welcome route
 app.get("/", (req: Request, res: Response) => {
-  res.status(200).json({
-    status: "success",
-    message: "Welcome to the Identity Reconcillation API service!",
-  });
+  return res.send(overview);
+  
+  // res.status(200).json({
+  //   status: "success",
+  //   message: "Welcome to the Identity Reconciliation API service!",
+  // });
 });
 
 // Unhandled routes

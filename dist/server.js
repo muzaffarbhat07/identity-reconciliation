@@ -7,6 +7,7 @@ const express_1 = __importDefault(require("express"));
 require("dotenv/config");
 const appError_1 = require("./utils/appError");
 const identity_routes_1 = __importDefault(require("./routes/identity.routes"));
+const overview_1 = __importDefault(require("./public/overview"));
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
 // Body parser middleware
@@ -15,10 +16,11 @@ app.use(express_1.default.json());
 app.use("/identity", identity_routes_1.default);
 // Welcome route
 app.get("/", (req, res) => {
-    res.status(200).json({
-        status: "success",
-        message: "Welcome to the Identity Reconcillation API service!",
-    });
+    return res.send(overview_1.default);
+    // res.status(200).json({
+    //   status: "success",
+    //   message: "Welcome to the Identity Reconciliation API service!",
+    // });
 });
 // Unhandled routes
 app.all("*", (req, res, next) => {

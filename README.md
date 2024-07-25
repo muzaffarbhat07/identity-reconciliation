@@ -23,7 +23,7 @@ The goal is to develop a solution that accurately identifies and keeps track of 
 
 It is given that orders on the online store will always have either an email or phone number, or both, in the checkout event. The system should keep track of the collected contact information in a relational database table named Contact.
 
-```sql
+```
 {
   id               Int
   phoneNumber      String?
