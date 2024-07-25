@@ -24,10 +24,10 @@ export default `
           <pre style="font-weight:bold;background-color:#f1f1f1;color:red;padding:8px;">
 {
   "contact":{
-    "primaryContatctId": number,
+    "primaryContactId": number,
     "emails": string[], // first element being email of primary contact
-    "phoneNumbers": string[], // first element being phoneNumber of primary conta
-    "secondaryContactIds": number[] // Array of all Contact IDs that are "seconda
+    "phoneNumbers": string[], // first element being phoneNumber of primary contact
+    "secondaryContactIds": number[] // Array of all Contact IDs that are "secondary" to the primary contact
   }
 }
           </pre>
@@ -110,7 +110,7 @@ export default `
             <pre style="font-weight:bold;background-color:#f1f1f1;color:red;padding:8px;">
 {
   "contact":{
-    "primaryContatctId": 1,
+    "primaryContactId": 1,
     "emails": ["muzaffar@hillvale.edu","naeem@hillvale.edu"]
     "phoneNumbers": ["123456"]
     "secondaryContactIds": [23]

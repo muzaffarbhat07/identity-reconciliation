@@ -56,13 +56,17 @@ By achieving these objectives, the online store can enhance its customer experie
 
 If a customer placed an order with
 ```
-email=muzaffar@hillvale.edu
-phoneNumber=123456
+{
+  "email": "muzaffar@hillvale.edu"
+  "phoneNumber": 123456
+}
 ```
 and later came back to place another order with
 ```
-email=naeem@hillvale.edu
-phoneNumber=123456
+{
+  "email": "naeem@hillvale.edu"
+  "phoneNumber": 123456
+}
 ```
 database will have the following rows:
 ```sql
@@ -105,7 +109,7 @@ The response is in this format:
 ```
 {
   "contact":{
-    "primaryContatctId": number,
+    "primaryContactId": number,
     "emails": string[], // first element being email of primary contact
     "phoneNumbers": string[], // first element being phoneNumber of primary conta
     "secondaryContactIds": number[] // Array of all Contact IDs that are "seconda
