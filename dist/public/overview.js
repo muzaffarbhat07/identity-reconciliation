@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = `
-    <div style="color:purple;display:flex;flex-direction:column;width:100%;max-width:1200px;margin:100px auto;padding:20px;">
+    <div style="color:purple;display:flex;flex-direction:column;width:100%;max-width:1200px;margin:70px auto;padding:20px;">
       <h1>Welcome to the Identity Reconciliation API service!</h1>
       <h2 style="margin-bottom:0;">Overview</h2>
       <ul style="list-decoration:none">
